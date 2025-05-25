@@ -128,87 +128,14 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/nerdamer/1.1.11/Algebra.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/nerdamer/1.1.11/Calculus.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/nerdamer/1.1.11/Solve.js"></script>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: url('https://images.unsplash.com/photo-1503264116251-35a269479413') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-      text-align: center;
-    }
-
-    header {
-      background: rgba(0, 0, 0, 0.7);
-      padding: 20px 0;
-    }
-
-    h1 {
-      font-size: 2.5em;
-      margin: 0;
-      background: linear-gradient(90deg, #00f2fe, #4facfe);
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    main {
-      padding: 30px 15px;
-      background: rgba(0, 0, 0, 0.6);
-      margin: 20px auto;
-      border-radius: 20px;
-      width: 90%;
-      max-width: 900px;
-    }
-
-    input[type="text"] {
-      padding: 12px;
-      font-size: 18px;
-      width: 300px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      outline: none;
-    }
-
-    button {
-      padding: 12px 24px;
-      font-size: 16px;
-      margin-top: 10px;
-      background-color: #4facfe;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-
-    label {
-      display: block;
-      margin-top: 20px;
-    }
-
-    input[type="range"] {
-      width: 300px;
-    }
-
-    #plot {
-      margin-top: 30px;
-      background-color: white;
-      border-radius: 10px;
-      padding: 10px;
-    }
-
-    span {
-      color: #ffd700;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header>
     <h1>Graphing Calculator</h1>
   </header>
   <main>
-    <input type="text" id="equationInput" placeholder="Enter equation like y = cosec(x) + cos(x)">
+    <input type="text" id="equationInput" placeholder="Enter equation like y = x^2 or x^2 + y^2 = 9 or tan(y) = x or cosec(x)">
     <br>
     <button id="plotButton">Plot</button>
 
@@ -221,131 +148,7 @@
     <div id="plot"></div>
   </main>
 
-  <script>
-    const xRangeSlider = document.getElementById('xRange');
-    const yRangeSlider = document.getElementById('yRange');
-    const xRangeValue = document.getElementById('xRangeValue');
-    const yRangeValue = document.getElementById('yRangeValue');
-    let xLimit = 10;
-    let yLimit = 10;
-
-    xRangeSlider.addEventListener('input', () => {
-      xLimit = parseInt(xRangeSlider.value);
-      xRangeValue.textContent = `[-${xLimit}, ${xLimit}]`;
-    });
-
-    yRangeSlider.addEventListener('input', () => {
-      yLimit = parseInt(yRangeSlider.value);
-      yRangeValue.textContent = `[-${yLimit}, ${yLimit}]`;
-    });
-
-    document.getElementById('plotButton').addEventListener('click', () => {
-      const input = document.getElementById('equationInput').value.toLowerCase();
-      const cleanedInput = input.replace(/cosec/g, 'csc').replace(/cot/g, 'cot');
-      if (!cleanedInput.includes('=')) {
-        plotExplicit(cleanedInput);
-      } else {
-        plotImplicit(cleanedInput);
-      }
-    });
-
-    function plotExplicit(expr) {
-      const exprRight = expr.replace('y=', '').replace('y =', '').trim();
-      const compiled = math.compile(exprRight);
-      const xValues = math.range(-xLimit, xLimit, 0.1).toArray();
-      const yValues = xValues.map(x => {
-        try {
-          const y = compiled.evaluate({ x });
-          return isFinite(y) ? y : null;
-        } catch {
-          return null;
-        }
-      });
-
-      const trace = {
-        x: xValues,
-        y: yValues,
-        mode: 'lines',
-        type: 'scatter',
-        line: { color: '#ff5722' },
-        hoverinfo: 'x+y'
-      };
-
-      const layout = {
-        title: 'y = ' + exprRight,
-        hovermode: 'closest',
-        xaxis: {
-          title: 'x',
-          range: [-xLimit, xLimit],
-          tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-          ticktext: ['-2π', '-π', '0', 'π', '2π']
-        },
-        yaxis: {
-          title: 'y',
-          range: [-yLimit, yLimit]
-        }
-      };
-
-      Plotly.newPlot('plot', [trace], layout);
-    }
-
-    function plotImplicit(equation) {
-      const [lhs, rhs] = equation.split('=').map(side => side.trim());
-      const f = nerdamer(lhs + '-(' + rhs + ')').toString();
-
-      const xRange = math.range(-xLimit, xLimit, 0.2).toArray();
-      const yRange = math.range(-yLimit, yLimit, 0.2).toArray();
-      const zValues = [];
-
-      for (let y of yRange) {
-        const row = [];
-        for (let x of xRange) {
-          try {
-            const val = nerdamer(f, { x, y }).evaluate().text();
-            row.push(parseFloat(val));
-          } catch {
-            row.push(NaN);
-          }
-        }
-        zValues.push(row);
-      }
-
-      const trace = {
-        z: zValues,
-        x: xRange,
-        y: yRange,
-        type: 'contour',
-        hoverinfo: 'x+y+z',
-        colorscale: 'Jet',
-        contours: {
-          coloring: 'lines',
-          showlabels: true,
-          labelfont: {
-            family: 'Roboto',
-            size: 12,
-            color: 'white'
-          }
-        }
-      };
-
-      const layout = {
-        title: 'Plot of: ' + equation,
-        hovermode: 'closest',
-        xaxis: {
-          title: 'x',
-          range: [-xLimit, xLimit],
-          tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-          ticktext: ['-2π', '-π', '0', 'π', '2π']
-        },
-        yaxis: {
-          title: 'y',
-          range: [-yLimit, yLimit]
-        }
-      };
-
-      Plotly.newPlot('plot', [trace], layout);
-    }
-  </script>
+  <script src="script.js"></script>
 </body>
 </html>
 
