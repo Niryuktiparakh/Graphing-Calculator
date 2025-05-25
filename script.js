@@ -1,33 +1,26 @@
+// Add missing trig functions
+math.import({
+  sec: function (x) { return 1 / Math.cos(x); },
+  cosec: function (x) { return 1 / Math.sin(x); },
+  cot: function (x) { return 1 / Math.tan(x); },
+  csc: function (x) { return 1 / Math.sin(x); }
+}, { override: true });
+
 document.getElementById("plotButton").addEventListener("click", function () {
-  const equationInput = document.getElementById("equationInput").value;
-  const equationDisplay = document.getElementById("equationDisplay");
-
-  if (!equationInput) {
-    alert("Please enter an equation.");
-    return;
-  }
-
-  equationDisplay.innerText = "y = " + equationInput;
+  const input = document.getElementById("equationInput").value;
+  const expr = input.replace("y=", "").trim();
 
   const x = [], y = [];
 
-  // Compile the expression using math.js
-  let compiled;
-  try {
-    compiled = math.compile(equationInput);
-  } catch (err) {
-    alert("Invalid equation: " + err.message);
-    return;
-  }
-
-  // Generate values from -10 to 10
   for (let i = -10; i <= 10; i += 0.1) {
-    x.push(i);
     try {
-      const result = compiled.evaluate({ x: i });
-      y.push(result);
-    } catch (err) {
-      y.push(null); // Skip invalid points
+      const scope = { x: i };
+      const yVal = math.evaluate(expr, scope);
+      x.push(i);
+      y.push(yVal);
+    } catch (error) {
+      x.push(i);
+      y.push(null);
     }
   }
 
@@ -35,13 +28,8 @@ document.getElementById("plotButton").addEventListener("click", function () {
     x: x,
     y: y,
     type: 'scatter',
-    mode: 'lines',
-    line: { color: 'blue' }
+    mode: 'lines'
   };
 
-  Plotly.newPlot('plot', [trace], {
-    title: 'Graph of y = ' + equationInput,
-    xaxis: { title: 'x' },
-    yaxis: { title: 'y' }
-  });
+  Plotly.newPlot('plot', [trace]);
 });
