@@ -1,5 +1,3 @@
-// script.js
-
 const xRangeSlider = document.getElementById('xRange');
 const yRangeSlider = document.getElementById('yRange');
 const xRangeValue = document.getElementById('xRangeValue');
@@ -63,22 +61,12 @@ function plotExplicit(expr) {
         title: 'x',
         range: [-xLimit, xLimit],
         tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-        ticktext: ['-2π', '-π', '0', 'π', '2π'],
-        showline: true,
-        linewidth: 2,
-        linecolor: 'black',
-        gridcolor: 'rgba(38,38,38,0.15)'
+        ticktext: ['-2π', '-π', '0', 'π', '2π']
       },
       yaxis: {
         title: 'y',
-        range: [-yLimit, yLimit],
-        showline: true,
-        linewidth: 2,
-        linecolor: 'black',
-        gridcolor: 'rgba(38,38,38,0.15)'
-      },
-      plot_bgcolor: 'white',
-      paper_bgcolor: 'white'
+        range: [-yLimit, yLimit]
+      }
     };
 
     Plotly.newPlot('plot', [trace], layout);
@@ -116,17 +104,13 @@ function plotImplicit(equation) {
     type: 'contour',
     hoverinfo: 'x+y+z',
     colorscale: 'Jet',
-    line: {
-      color: 'black',
-      width: 2
-    },
     contours: {
       coloring: 'lines',
       showlabels: true,
       labelfont: {
         family: 'Roboto',
         size: 12,
-        color: 'black'
+        color: 'white'
       }
     }
   };
@@ -138,22 +122,12 @@ function plotImplicit(equation) {
       title: 'x',
       range: [-xLimit, xLimit],
       tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-      ticktext: ['-2π', '-π', '0', 'π', '2π'],
-      showline: true,
-      linewidth: 2,
-      linecolor: 'black',
-      gridcolor: 'rgba(38,38,38,0.15)'
+      ticktext: ['-2π', '-π', '0', 'π', '2π']
     },
     yaxis: {
       title: 'y',
-      range: [-yLimit, yLimit],
-      showline: true,
-      linewidth: 2,
-      linecolor: 'black',
-      gridcolor: 'rgba(38,38,38,0.15)'
-    },
-    plot_bgcolor: 'white',
-    paper_bgcolor: 'white'
+      range: [-yLimit, yLimit]
+    }
   };
 
   Plotly.newPlot('plot', [trace], layout);
