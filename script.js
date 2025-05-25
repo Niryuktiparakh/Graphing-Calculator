@@ -34,137 +34,120 @@
 // }); 
 
 
-const xRangeSlider = document.getElementById('xRange');
-const yRangeSlider = document.getElementById('yRange');
-const xRangeValue = document.getElementById('xRangeValue');
-const yRangeValue = document.getElementById('yRangeValue');
-let xLimit = 10;
-let yLimit = 10;
-
-xRangeSlider.addEventListener('input', () => {
-  xLimit = parseInt(xRangeSlider.value);
-  xRangeValue.textContent = `[-${xLimit}, ${xLimit}]`;
-});
-
-yRangeSlider.addEventListener('input', () => {
-  yLimit = parseInt(yRangeSlider.value);
-  yRangeValue.textContent = `[-${yLimit}, ${yLimit}]`;
-});
-
-document.getElementById('plotButton').addEventListener('click', () => {
-  const rawInput = document.getElementById('equationInput').value.toLowerCase().replace(/\s+/g, '');
-  const cleanedInput = rawInput
-    .replace(/cosec/g, '1/sin')
-    .replace(/csc/g, '1/sin')
-    .replace(/cot/g, '1/tan')
-    .replace(/sec/g, '1/cos');
-
-  if (cleanedInput.includes('=')) {
-    plotImplicit(cleanedInput);
-  } else if (cleanedInput.startsWith('y=')) {
-    plotExplicit(cleanedInput.substring(2));
-  } else {
-    alert("Unsupported format. Use y=expression or implicit equations like x^2+y^2=9.");
+// Utility function to generate a range of numbers
+function linspace(start, end, num) {
+  const arr = [];
+  const step = (end - start) / (num - 1);
+  for (let i = 0; i < num; i++) {
+    arr.push(start + step * i);
   }
-});
-
-function plotExplicit(expr) {
-  try {
-    const compiled = math.compile(expr);
-    const xValues = math.range(-xLimit, xLimit, 0.1).toArray();
-    const yValues = xValues.map(x => {
-      try {
-        const y = compiled.evaluate({ x });
-        return isFinite(y) ? y : null;
-      } catch {
-        return null;
-      }
-    });
-
-    const trace = {
-      x: xValues,
-      y: yValues,
-      mode: 'lines',
-      type: 'scatter',
-      line: { color: '#ff5722' },
-      hoverinfo: 'x+y'
-    };
-
-    const layout = {
-      title: 'y = ' + expr,
-      hovermode: 'closest',
-      xaxis: {
-        title: 'x',
-        range: [-xLimit, xLimit],
-        tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-        ticktext: ['-2π', '-π', '0', 'π', '2π']
-      },
-      yaxis: {
-        title: 'y',
-        range: [-yLimit, yLimit]
-      }
-    };
-
-    Plotly.newPlot('plot', [trace], layout);
-  } catch (err) {
-    alert("Invalid expression or unable to evaluate: " + err.message);
-  }
+  return arr;
 }
 
-function plotImplicit(equation) {
-  const [lhs, rhs] = equation.split('=');
-  const implicitExpr = `(${lhs}) - (${rhs})`;
+function plotGraph() {
+  const exprInput = document.getElementById("equation").value.trim();
 
-  const xRange = math.range(-xLimit, xLimit, 0.25).toArray();
-  const yRange = math.range(-yLimit, yLimit, 0.25).toArray();
-  const zValues = [];
-
-  for (let y of yRange) {
-    const row = [];
-    for (let x of xRange) {
-      try {
-        const val = nerdamer(implicitExpr, { x, y }).evaluate().text();
-        const numericVal = parseFloat(val);
-        row.push(isNaN(numericVal) ? NaN : numericVal);
-      } catch {
-        row.push(NaN);
-      }
-    }
-    zValues.push(row);
+  if (!exprInput) {
+    alert("Please enter an equation.");
+    return;
   }
 
-  const trace = {
-    z: zValues,
-    x: xRange,
-    y: yRange,
-    type: 'contour',
-    hoverinfo: 'x+y+z',
-    colorscale: 'Jet',
-    contours: {
-      coloring: 'lines',
-      showlabels: true,
-      labelfont: {
-        family: 'Roboto',
-        size: 12,
-        color: 'white'
+  const xVals = linspace(-10, 10, 100);
+  const yVals = linspace(-10, 10, 100);
+  const zVals = [];
+
+  let isExplicit = false;
+
+  // Detect if it's an explicit equation (y = f(x))
+  let expr = exprInput;
+  if (expr.startsWith("y=") || expr.startsWith("y =")) {
+    isExplicit = true;
+    expr = expr.replace(/^y\s*=\s*/, "");
+  }
+
+  try {
+    if (isExplicit) {
+      // Explicit Function: Plot y = f(x)
+      const xPoints = [];
+      const yPoints = [];
+      for (let x = -10; x <= 10; x += 0.1) {
+        const scope = { x };
+        const y = math.evaluate(expr, scope);
+        if (typeof y === "number" && isFinite(y)) {
+          xPoints.push(x);
+          yPoints.push(y);
+        }
       }
-    }
-  };
 
-  const layout = {
-    title: 'Graph of: ' + equation,
-    hovermode: 'closest',
-    xaxis: {
-      title: 'x',
-      range: [-xLimit, xLimit],
-      tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-      ticktext: ['-2π', '-π', '0', 'π', '2π']
-    },
-    yaxis: {
-      title: 'y',
-      range: [-yLimit, yLimit]
-    }
-  };
+      const trace = {
+        x: xPoints,
+        y: yPoints,
+        mode: 'lines',
+        type: 'scatter',
+        name: `y = ${expr}`
+      };
 
-  Plotly.newPlot('plot', [trace], layout);
+      Plotly.newPlot("plot", [trace], {
+        title: `Graph of y = ${expr}`,
+        xaxis: { title: "x" },
+        yaxis: { title: "y" },
+      });
+
+    } else {
+      // Implicit Function: Evaluate over grid
+      for (let i = 0; i < yVals.length; i++) {
+        const row = [];
+        for (let j = 0; j < xVals.length; j++) {
+          const x = xVals[j];
+          const y = yVals[i];
+
+          const scope = { x, y };
+
+          // Convert implicit equation to f(x, y) = 0 form
+          const [left, right] = exprInput.split("=");
+          if (!right) {
+            alert("Please enter an equation using '=' for implicit form.");
+            return;
+          }
+
+          const implicitExpr = `(${left}) - (${right})`;
+          const result = math.evaluate(implicitExpr, scope);
+
+          // To highlight 0-contour only, use result directly
+          row.push(result);
+        }
+        zVals.push(row);
+      }
+
+      const contour = {
+        x: xVals,
+        y: yVals,
+        z: zVals,
+        type: "contour",
+        contours: {
+          coloring: 'lines',
+          showlabels: true,
+          labelfont: {
+            size: 12,
+            color: 'black'
+          },
+          start: 0,
+          end: 0,
+          size: 0.5
+        },
+        line: {
+          width: 2
+        }
+      };
+
+      Plotly.newPlot("plot", [contour], {
+        title: `Graph of ${exprInput}`,
+        xaxis: { title: "x" },
+        yaxis: { title: "y" }
+      });
+    }
+  } catch (error) {
+    console.error("Error evaluating expression:", error);
+    alert("Invalid equation. Please enter a valid mathematical expression.");
+  }
 }
