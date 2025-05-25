@@ -1,0 +1,43 @@
+<!--<!DOCTYPE html>
+<html>
+<head>
+  <title>Graph Viewer</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h1>Upload Graph Data</h1>
+  <input type="file" id="fileInput" />
+  
+   Equation display added here 
+  <h2 id="equationDisplay"></h2>
+
+  <div id="plot" style="width:90%;height:500px;"></div>
+
+  <script src="script.js"></script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Graph Viewer</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+</head>
+
+<body>
+    <h1>Graphing Calculator</h1>
+
+    <label for="equationInput">Enter equation (e.g., sin(x), x^2 + 2x):</label><br>
+    <input type="text" id="equationInput" placeholder="e.g., sin(x) or x^2 + 2x" />
+    <button id="plotButton">Plot</button>
+
+    <h2 id="equationDisplay"></h2>
+
+    <div id="plot" style="width:90%;height:500px;"></div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
