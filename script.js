@@ -1,11 +1,12 @@
 document.getElementById('plotButton').addEventListener('click', () => {
   const input = document.getElementById('equationInput').value.toLowerCase();
 
-  // Replace common trig aliases
+  // Convert alternate trig notation to mathjs-compatible form
   const cleanedInput = input
     .replace(/cosec/g, '1/sin')
-    .replace(/cot/g, '1/tan')
-    .replace(/sec/g, '1/cos');
+    .replace(/csc/g, '1/sin')
+    .replace(/sec/g, '1/cos')
+    .replace(/cot/g, '1/tan');
 
   try {
     if (!cleanedInput.includes('=')) {
@@ -26,10 +27,11 @@ document.getElementById('plotButton').addEventListener('click', () => {
 function plotExplicit(expr) {
   const exprRight = expr.replace('y=', '').replace('y =', '').trim();
   const compiled = math.compile(exprRight);
+
   const xValues = math.range(-10, 10, 0.1).toArray();
   const yValues = xValues.map(x => {
     try {
-      const y = compiled.evaluate({x});
+      const y = compiled.evaluate({ x });
       return (typeof y === 'number' && isFinite(y)) ? y : null;
     } catch {
       return null;
@@ -41,12 +43,12 @@ function plotExplicit(expr) {
     y: yValues,
     mode: 'lines',
     type: 'scatter',
-    line: { color: 'black' },
+    line: { color: 'orange' },
     hoverinfo: 'x+y'
   };
 
   const layout = {
-    title: 'y = ' + exprRight,
+    title: 'Graph of y = ' + exprRight,
     xaxis: { title: 'x' },
     yaxis: { title: 'y' }
   };
@@ -56,18 +58,19 @@ function plotExplicit(expr) {
 
 function plotImplicit(equation) {
   const [lhs, rhs] = equation.split('=').map(part => part.trim());
-  const f = nerdamer(lhs + '-(' + rhs + ')').toString();
+  const expr = `${lhs} - (${rhs})`;
 
-  const xRange = math.range(-10, 10, 0.2).toArray();
-  const yRange = math.range(-10, 10, 0.2).toArray();
+  const compiled = math.compile(expr);
+  const xRange = math.range(-10, 10, 0.25).toArray();
+  const yRange = math.range(-10, 10, 0.25).toArray();
   const zValues = [];
 
   for (let y of yRange) {
     const row = [];
     for (let x of xRange) {
       try {
-        const val = nerdamer(f, {x, y}).evaluate().text();
-        row.push(parseFloat(val));
+        const z = compiled.evaluate({ x, y });
+        row.push((typeof z === 'number' && isFinite(z)) ? z : NaN);
       } catch {
         row.push(NaN);
       }
@@ -75,27 +78,27 @@ function plotImplicit(equation) {
     zValues.push(row);
   }
 
-  const contour = {
+  const trace = {
     z: zValues,
     x: xRange,
     y: yRange,
     type: 'contour',
     colorscale: 'Jet',
     contours: {
+      coloring: 'lines',
+      showlabels: false,
       start: 0,
       end: 0,
-      size: 0.01,
-      coloring: 'lines',
-      showlabels: false
+      size: 0.01
     },
     hoverinfo: 'x+y'
   };
 
   const layout = {
-    title: equation,
+    title: 'Implicit Plot of ' + equation,
     xaxis: { title: 'x' },
     yaxis: { title: 'y' }
   };
 
-  Plotly.newPlot('plot', [contour], layout);
+  Plotly.newPlot('plot', [trace], layout);
 }
