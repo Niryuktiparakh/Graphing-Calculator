@@ -1,19 +1,19 @@
-// Add custom trigonometric inverses to math.js
-math.import({
-  csc: function (x) { return 1 / Math.sin(x); },
-  sec: function (x) { return 1 / Math.cos(x); },
-  cot: function (x) { return 1 / Math.tan(x); }
-}, { override: true });
-
 document.getElementById('plotButton').addEventListener('click', () => {
   const input = document.getElementById('equationInput').value.toLowerCase();
+
+  // Replace common trig aliases
   const cleanedInput = input
-    .replace(/cosec/g, 'csc')
-    .replace(/sec/g, 'sec')
-    .replace(/cot/g, 'cot');
+    .replace(/cosec/g, '1/sin')
+    .replace(/cot/g, '1/tan')
+    .replace(/sec/g, '1/cos');
 
   try {
     if (!cleanedInput.includes('=')) {
+      alert("Please enter an equation with '='");
+      return;
+    }
+
+    if (cleanedInput.startsWith('y=')) {
       plotExplicit(cleanedInput);
     } else {
       plotImplicit(cleanedInput);
@@ -24,12 +24,12 @@ document.getElementById('plotButton').addEventListener('click', () => {
 });
 
 function plotExplicit(expr) {
-  const exprRight = expr.replace(/^y\s*=\s*/, '').trim();
+  const exprRight = expr.replace('y=', '').replace('y =', '').trim();
   const compiled = math.compile(exprRight);
   const xValues = math.range(-10, 10, 0.1).toArray();
   const yValues = xValues.map(x => {
     try {
-      const y = compiled.evaluate({ x });
+      const y = compiled.evaluate({x});
       return (typeof y === 'number' && isFinite(y)) ? y : null;
     } catch {
       return null;
@@ -41,12 +41,13 @@ function plotExplicit(expr) {
     y: yValues,
     mode: 'lines',
     type: 'scatter',
-    line: { color: 'orange' }
+    line: { color: 'black' },
+    hoverinfo: 'x+y'
   };
 
   const layout = {
-    title: 'Graph of y = ' + exprRight,
-    xaxis: { title: 'x', tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI], ticktext: ['-2π', '-π', '0', 'π', '2π'] },
+    title: 'y = ' + exprRight,
+    xaxis: { title: 'x' },
     yaxis: { title: 'y' }
   };
 
@@ -65,7 +66,7 @@ function plotImplicit(equation) {
     const row = [];
     for (let x of xRange) {
       try {
-        const val = nerdamer(f, { x, y }).evaluate().text();
+        const val = nerdamer(f, {x, y}).evaluate().text();
         row.push(parseFloat(val));
       } catch {
         row.push(NaN);
@@ -79,20 +80,19 @@ function plotImplicit(equation) {
     x: xRange,
     y: yRange,
     type: 'contour',
-    colorscale: 'Electric',
+    colorscale: 'Jet',
     contours: {
+      start: 0,
+      end: 0,
+      size: 0.01,
       coloring: 'lines',
-      showlabels: true,
-      labelfont: {
-        family: 'Roboto',
-        size: 12,
-        color: 'white'
-      }
-    }
+      showlabels: false
+    },
+    hoverinfo: 'x+y'
   };
 
   const layout = {
-    title: 'Implicit Plot of ' + equation,
+    title: equation,
     xaxis: { title: 'x' },
     yaxis: { title: 'y' }
   };
