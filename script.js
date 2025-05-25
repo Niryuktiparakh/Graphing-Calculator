@@ -1,35 +1,34 @@
-// Add missing trig functions
-math.import({
-  sec: function (x) { return 1 / Math.cos(x); },
-  cosec: function (x) { return 1 / Math.sin(x); },
-  cot: function (x) { return 1 / Math.tan(x); },
-  csc: function (x) { return 1 / Math.sin(x); }
-}, { override: true });
+document.getElementById("fileInput").addEventListener("change", function(evt) {
+  const file = evt.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const lines = e.target.result.split("\n");
 
-document.getElementById("plotButton").addEventListener("click", function () {
-  const input = document.getElementById("equationInput").value;
-  const expr = input.replace("y=", "").trim();
-
-  const x = [], y = [];
-
-  for (let i = -10; i <= 10; i += 0.1) {
-    try {
-      const scope = { x: i };
-      const yVal = math.evaluate(expr, scope);
-      x.push(i);
-      y.push(yVal);
-    } catch (error) {
-      x.push(i);
-      y.push(null);
+    // Check for equation header
+    if (lines[0].startsWith("#")) {
+      const equation = lines[0].substring(1).trim();
+      document.getElementById("equationDisplay").innerText = "y = " + equation;
+      lines.shift(); // remove header
     }
-  }
 
-  const trace = {
-    x: x,
-    y: y,
-    type: 'scatter',
-    mode: 'lines'
+    const x = [], y = [];
+
+    lines.forEach(line => {
+      const [xVal, yVal] = line.split(",");
+      if (!isNaN(xVal) && !isNaN(yVal)) {
+        x.push(parseFloat(xVal));
+        y.push(parseFloat(yVal));
+      }
+    });
+
+    const trace = {
+      x: x,
+      y: y,
+      type: 'scatter',
+      mode: 'lines'
+    };
+
+    Plotly.newPlot('plot', [trace]);
   };
-
-  Plotly.newPlot('plot', [trace]);
+  reader.readAsText(file);
 });
