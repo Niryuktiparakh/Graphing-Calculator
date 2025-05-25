@@ -53,7 +53,11 @@ yRangeSlider.addEventListener('input', () => {
 
 document.getElementById('plotButton').addEventListener('click', () => {
   const rawInput = document.getElementById('equationInput').value.toLowerCase().replace(/\s+/g, '');
-  const cleanedInput = rawInput.replace(/cosec/g, '1/sin').replace(/cot/g, '1/tan').replace(/sec/g, '1/cos');
+  const cleanedInput = rawInput
+    .replace(/cosec/g, '1/sin')
+    .replace(/csc/g, '1/sin')
+    .replace(/cot/g, '1/tan')
+    .replace(/sec/g, '1/cos');
 
   if (cleanedInput.includes('=')) {
     plotImplicit(cleanedInput);
@@ -120,7 +124,8 @@ function plotImplicit(equation) {
     for (let x of xRange) {
       try {
         const val = nerdamer(implicitExpr, { x, y }).evaluate().text();
-        row.push(parseFloat(val));
+        const numericVal = parseFloat(val);
+        row.push(isNaN(numericVal) ? NaN : numericVal);
       } catch {
         row.push(NaN);
       }
