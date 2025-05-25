@@ -1,7 +1,17 @@
+// Add custom trigonometric inverses to math.js
+math.import({
+  csc: function (x) { return 1 / Math.sin(x); },
+  sec: function (x) { return 1 / Math.cos(x); },
+  cot: function (x) { return 1 / Math.tan(x); }
+}, { override: true });
+
 document.getElementById('plotButton').addEventListener('click', () => {
   const input = document.getElementById('equationInput').value.toLowerCase();
-  const cleanedInput = input.replace(/cosec/g, 'csc').replace(/sec/g, 'sec').replace(/cot/g, 'cot');
-  
+  const cleanedInput = input
+    .replace(/cosec/g, 'csc')
+    .replace(/sec/g, 'sec')
+    .replace(/cot/g, 'cot');
+
   try {
     if (!cleanedInput.includes('=')) {
       plotExplicit(cleanedInput);
@@ -14,12 +24,12 @@ document.getElementById('plotButton').addEventListener('click', () => {
 });
 
 function plotExplicit(expr) {
-  const exprRight = expr.replace('y=', '').replace('y =', '').trim();
+  const exprRight = expr.replace(/^y\s*=\s*/, '').trim();
   const compiled = math.compile(exprRight);
   const xValues = math.range(-10, 10, 0.1).toArray();
   const yValues = xValues.map(x => {
     try {
-      const y = compiled.evaluate({x});
+      const y = compiled.evaluate({ x });
       return (typeof y === 'number' && isFinite(y)) ? y : null;
     } catch {
       return null;
@@ -55,7 +65,7 @@ function plotImplicit(equation) {
     const row = [];
     for (let x of xRange) {
       try {
-        const val = nerdamer(f, {x, y}).evaluate().text();
+        const val = nerdamer(f, { x, y }).evaluate().text();
         row.push(parseFloat(val));
       } catch {
         row.push(NaN);
@@ -83,7 +93,7 @@ function plotImplicit(equation) {
 
   const layout = {
     title: 'Implicit Plot of ' + equation,
-    xaxis: { title: 'x', tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI], ticktext: ['-2π', '-π', '0', 'π', '2π'] },
+    xaxis: { title: 'x' },
     yaxis: { title: 'y' }
   };
 
