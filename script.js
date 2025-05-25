@@ -34,132 +34,67 @@
 // }); 
 
 
-const xRangeSlider = document.getElementById('xRange');
-const yRangeSlider = document.getElementById('yRange');
-const xRangeValue = document.getElementById('xRangeValue');
-const yRangeValue = document.getElementById('yRangeValue');
-let xLimit = 10;
-let yLimit = 10;
+// Add missing trig functions to math.js
+math.import({
+  sec: function (x) { return 1 / Math.cos(x); },
+  cosec: function (x) { return 1 / Math.sin(x); },
+  cot: function (x) { return 1 / Math.tan(x); },
+  csc: function (x) { return 1 / Math.sin(x); }
+}, { override: true });
 
-xRangeSlider.addEventListener('input', () => {
-  xLimit = parseInt(xRangeSlider.value);
-  xRangeValue.textContent = `[-${xLimit}, ${xLimit}]`;
-});
+document.getElementById("plotButton").addEventListener("click", function () {
+  const input = document.getElementById("equationInput").value;
+  let expr = input.replace("y=", "").trim();
 
-yRangeSlider.addEventListener('input', () => {
-  yLimit = parseInt(yRangeSlider.value);
-  yRangeValue.textContent = `[-${yLimit}, ${yLimit}]`;
-});
+  // Replace cosec with csc for consistency
+  expr = expr.replace(/cosec\(/g, "csc(");
 
-document.getElementById('plotButton').addEventListener('click', () => {
-  const rawInput = document.getElementById('equationInput').value.toLowerCase().replace(/\s+/g, '');
-  const cleanedInput = rawInput.replace(/cosec/g, '1/sin').replace(/cot/g, '1/tan').replace(/sec/g, '1/cos');
+  const x = [], y = [];
 
-  if (cleanedInput.includes('=')) {
-    plotImplicit(cleanedInput);
-  } else if (cleanedInput.startsWith('y=')) {
-    plotExplicit(cleanedInput.substring(2));
-  } else {
-    alert("Unsupported format. Use y=expression or implicit equations like x^2+y^2=9.");
-  }
-});
-
-function plotExplicit(expr) {
-  try {
-    const compiled = math.compile(expr);
-    const xValues = math.range(-xLimit, xLimit, 0.1).toArray();
-    const yValues = xValues.map(x => {
-      try {
-        const y = compiled.evaluate({ x });
-        return isFinite(y) ? y : null;
-      } catch {
-        return null;
-      }
-    });
-
-    const trace = {
-      x: xValues,
-      y: yValues,
-      mode: 'lines',
-      type: 'scatter',
-      line: { color: '#ff5722' },
-      hoverinfo: 'x+y'
-    };
-
-    const layout = {
-      title: 'y = ' + expr,
-      hovermode: 'closest',
-      xaxis: {
-        title: 'x',
-        range: [-xLimit, xLimit],
-        tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-        ticktext: ['-2π', '-π', '0', 'π', '2π']
-      },
-      yaxis: {
-        title: 'y',
-        range: [-yLimit, yLimit]
-      }
-    };
-
-    Plotly.newPlot('plot', [trace], layout);
-  } catch (err) {
-    alert("Invalid expression or unable to evaluate: " + err.message);
-  }
-}
-
-function plotImplicit(equation) {
-  const [lhs, rhs] = equation.split('=');
-  const implicitExpr = `(${lhs}) - (${rhs})`;
-
-  const xRange = math.range(-xLimit, xLimit, 0.25).toArray();
-  const yRange = math.range(-yLimit, yLimit, 0.25).toArray();
-  const zValues = [];
-
-  for (let y of yRange) {
-    const row = [];
-    for (let x of xRange) {
-      try {
-        const val = nerdamer(implicitExpr, { x, y }).evaluate().text();
-        row.push(parseFloat(val));
-      } catch {
-        row.push(NaN);
-      }
+  for (let i = -Math.PI * 4; i <= Math.PI * 4; i += 0.1) {
+    try {
+      const scope = { x: i };
+      const yVal = math.evaluate(expr, scope);
+      x.push(i);
+      y.push(yVal);
+    } catch (error) {
+      x.push(i);
+      y.push(null);
     }
-    zValues.push(row);
   }
 
   const trace = {
-    z: zValues,
-    x: xRange,
-    y: yRange,
-    type: 'contour',
-    hoverinfo: 'x+y+z',
-    colorscale: 'Jet',
-    contours: {
-      coloring: 'lines',
-      showlabels: true,
-      labelfont: {
-        family: 'Roboto',
-        size: 12,
-        color: 'white'
-      }
-    }
+    x: x,
+    y: y,
+    type: 'scatter',
+    mode: 'lines',
+    line: { shape: 'spline' }
   };
 
+  const tickVals = [];
+  const tickText = [];
+  for (let k = -8; k <= 8; k++) {
+    const val = k * Math.PI / 2;
+    tickVals.push(val);
+    if (k === 0) tickText.push('0');
+    else if (k === 1) tickText.push('π/2');
+    else if (k === -1) tickText.push('-π/2');
+    else if (k % 2 === 0) tickText.push(`${k / 2}π`);
+    else tickText.push(`${k}π/2`);
+  }
+
   const layout = {
-    title: 'Graph of: ' + equation,
-    hovermode: 'closest',
     xaxis: {
-      title: 'x',
-      range: [-xLimit, xLimit],
-      tickvals: [-2 * Math.PI, -Math.PI, 0, Math.PI, 2 * Math.PI],
-      ticktext: ['-2π', '-π', '0', 'π', '2π']
+      tickvals: tickVals,
+      ticktext: tickText,
+      showgrid: true,
+      range: [-Math.PI * 4, Math.PI * 4]
     },
     yaxis: {
-      title: 'y',
-      range: [-yLimit, yLimit]
+      autorange: true,
+      showgrid: true
     }
   };
 
   Plotly.newPlot('plot', [trace], layout);
-}
+});
