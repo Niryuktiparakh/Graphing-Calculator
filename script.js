@@ -60,9 +60,16 @@ function plotImplicit(equation) {
   const [lhs, rhs] = equation.split('=').map(part => part.trim());
   const expr = `${lhs} - (${rhs})`;
 
-  const compiled = math.compile(expr);
-  const xRange = math.range(-10, 10, 0.25).toArray();
-  const yRange = math.range(-10, 10, 0.25).toArray();
+  let compiled;
+  try {
+    compiled = math.compile(expr);
+  } catch (err) {
+    alert('Error compiling equation: ' + err.message);
+    return;
+  }
+
+  const xRange = math.range(-10, 10, 0.1).toArray();
+  const yRange = math.range(-10, 10, 0.1).toArray();
   const zValues = [];
 
   for (let y of yRange) {
@@ -86,16 +93,16 @@ function plotImplicit(equation) {
     colorscale: 'Jet',
     contours: {
       coloring: 'lines',
-      showlabels: false,
       start: 0,
       end: 0,
-      size: 0.01
+      size: 0.001,
+      showlines: true
     },
     hoverinfo: 'x+y'
   };
 
   const layout = {
-    title: 'Implicit Plot of ' + equation,
+    title: `Implicit Plot of ${equation}`,
     xaxis: { title: 'x' },
     yaxis: { title: 'y' }
   };
